@@ -1,0 +1,40 @@
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+             xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:beans="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+	http://www.springframework.org/schema/security
+	http://www.springframework.org/schema/security/spring-security-3.2.xsd">
+
+    <!--import relevant resources-->
+    <beans:import resource="spring-database.xml"/>
+
+    <!--configure spring security-->
+    <http auto-config="true" use-expressions="true" access-denied-page="/auth/denied">
+        <intercept-url pattern="/messages/overview" access="isAuthenticated()"/>
+        <intercept-url pattern="/auth/login" access="permitAll"/>
+
+       <form-login login-page="/auth/login"
+                    authentication-failure-url="/auth/login?error=true"
+                    default-target-url="/messages/overview"/>
+
+        <logout invalidate-session="true"
+                logout-success-url="/auth/login"
+                logout-url="/auth/logout"/>
+    </http>
+
+    <!--Enable expressions like hasRole('ROLE_NAME')-->
+    <global-method-security pre-post-annotations="enabled" />
+
+    <!-- Declare an authentication-manager to use a custom userDetailsService -->
+    <authentication-manager>
+        <authentication-provider>
+            <jdbc-user-service id="userService"
+                               data-source-ref="dataSource"
+                               group-authorities-by-username-query="SELECT g.id, g.group_name, ga.authority FROM groups g, group_members gm, group_authorities ga WHERE gm.username = ? AND g.id = ga.group_id AND g.id = gm.group_id"
+                               users-by-username-query="SELECT username, password, enabled FROM users WHERE username = ?"
+                               authorities-by-username-query="SELECT u.username as 'username', ua.authority as 'authority' FROM authorities ua, users u WHERE ua.username = u.username AND u.username = ?"/>
+        </authentication-provider>
+    </authentication-manager>
+</beans:beans>

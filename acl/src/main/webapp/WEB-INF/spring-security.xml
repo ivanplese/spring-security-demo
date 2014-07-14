@@ -1,0 +1,63 @@
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+	xmlns:beans="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+	http://www.springframework.org/schema/security
+	http://www.springframework.org/schema/security/spring-security-3.2.xsd">
+
+    <!-- Loads ACL related configurations -->
+    <beans:import resource="acl-context.xml" />
+
+    <!--configure spring security-->
+    <http auto-config="true" use-expressions="true" access-denied-page="/auth/denied">
+        <intercept-url pattern="/messages/overview" access="hasRole('ROLE_VISITOR')"/>
+        <intercept-url pattern="/auth/login" access="permitAll"/>
+
+       <form-login login-page="/auth/login"
+                    authentication-failure-url="/auth/login?error=true"
+                    default-target-url="/messages/overview"/>
+
+        <logout invalidate-session="true"
+                logout-success-url="/auth/login"
+                logout-url="/auth/logout"/>
+    </http>
+
+    <!--first authentication manager that uses combination of LDAP + DB-->
+    <authentication-manager>
+        <authentication-provider ref='ldapAuthProvider'/>
+    </authentication-manager>
+
+    <!--context source for ldap-server used for authentification-->
+    <beans:bean id="contextSource" class="org.springframework.security.ldap.DefaultSpringSecurityContextSource">
+        <beans:constructor-arg value="ldap://plese.com.hr:389" />
+        <beans:property name="userDn" value="cn=admin,dc=koshnica,dc=biz" />
+        <beans:property name="base" value="dc=koshnica,dc=biz"/>
+        <beans:property name="password" value="H8kVly6g" />
+    </beans:bean>
+
+    <!--LDAP authentication provider used by the default authentication manager.
+        Searches inside the ou=People domain.
+        Uses ldap context source.
+        Uses custom AuthenticationPopulator that gets ROLES from the Database-->
+    <beans:bean id="ldapAuthProvider"
+                class="org.springframework.security.ldap.authentication.LdapAuthenticationProvider">
+        <beans:constructor-arg>
+            <beans:bean
+                    class="org.springframework.security.ldap.authentication.BindAuthenticator">
+                <beans:constructor-arg ref="contextSource" />
+                <beans:property name="userDnPatterns">
+                    <beans:list>
+                        <beans:value>uid={0},ou=People</beans:value>
+                    </beans:list>
+                </beans:property>
+            </beans:bean>
+        </beans:constructor-arg>
+        <beans:constructor-arg>
+            <beans:bean class="org.plese.service.CustomLdapAuthoritiesPopulator">
+                <beans:property name="dbUserDetailService" ref="dbUserDetailService"/>
+            </beans:bean>
+        </beans:constructor-arg>
+    </beans:bean>
+
+</beans:beans>

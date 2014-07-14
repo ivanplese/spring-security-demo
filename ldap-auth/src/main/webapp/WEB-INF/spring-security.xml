@@ -1,0 +1,85 @@
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+	xmlns:beans="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+	http://www.springframework.org/schema/security
+	http://www.springframework.org/schema/security/spring-security-3.2.xsd">
+
+	<http auto-config="true" use-expressions="true">
+        <intercept-url pattern="/public/add**" access="isAuthenticated()" />
+		<intercept-url pattern="/public/edit**" access="isAuthenticated()"/>
+        <intercept-url pattern="/public/delete**" access="isAuthenticated()"/>
+        <intercept-url pattern="/messages/overview" access="isAuthenticated()"/>
+
+        <form-login login-page="/auth/login"
+                    authentication-failure-url="/auth/login?error=true"
+                    default-target-url="/messages/overview"/>
+
+        <logout invalidate-session="true"
+                logout-success-url="/auth/login"
+                logout-url="/auth/logout"/>
+	</http>
+
+    <authentication-manager>
+        <ldap-authentication-provider  user-search-filter="(uid={0})" user-search-base="ou=people"/>
+    </authentication-manager>
+
+    <ldap-server  id="ldapServer" url="ldap://plese.com.hr:389/dc=koshnica,dc=biz" manager-dn="Cn=Admin,dc=koshnica,dc=biz" manager-password="H8kVly6g"/>
+
+
+    <!--****************************-->
+    <!--AUTHENTICATION+AUTHORIZATION-->
+
+
+    <!--<http auto-config="true" use-expressions="true">
+        <intercept-url pattern="/public/add**" access="hasAuthority('ROLE_ADMIN')" />
+        <intercept-url pattern="/public/edit**" access="hasAuthority('ROLE_ADMIN')"/>
+        <intercept-url pattern="/public/delete**" access="hasAuthority('ROLE_ADMIN')"/>
+        <intercept-url pattern="/messages/overview" access="isAuthenticated()"/>
+
+        <form-login login-page="/auth/login"
+                    authentication-failure-url="/auth/login?error=true"
+                    default-target-url="/messages/overview"/>
+
+        <logout invalidate-session="true"
+                logout-success-url="/auth/login"
+                logout-url="/auth/logout"/>
+    </http>-->
+
+    <!--<authentication-manager>
+         <authentication-provider ref='ldapAuthProvider'/>
+    </authentication-manager>-->
+
+    <!--In the contextSource for the LDAP we define the url wher the OpenLDAP server is running
+    The principals with which we will look through the ldap tree
+    Starting point for our searches-->
+    <!--<beans:bean id="contextSource" class="org.springframework.security.ldap.DefaultSpringSecurityContextSource">
+        <beans:constructor-arg value="ldap://plese.com.hr:389" />
+        <beans:property name="userDn" value="cn=admin,dc=koshnica,dc=biz" />
+        <beans:property name="base" value="dc=koshnica,dc=biz"/>
+        <beans:property name="password" value="H8kVly6g" />
+    </beans:bean>-->
+
+    <!--Authentication provider which is an LdapAuthenticationProvider. We pass our
+    implementation of LdapAuthoritiesPopulator to the constructor-->
+    <!--<beans:bean id="ldapAuthProvider"
+                class="org.springframework.security.ldap.authentication.LdapAuthenticationProvider">
+        <beans:constructor-arg ref="bindAuthenticator"/>
+        <beans:constructor-arg ref="customLdapAuthoritiesPopulator"/>
+    </beans:bean>-->
+
+   <!-- <beans:bean id="bindAuthenticator" class="org.springframework.security.ldap.authentication.BindAuthenticator">
+        <beans:constructor-arg ref="contextSource" />
+        <beans:property name="userDnPatterns">
+            <beans:list>
+                <beans:value>uid={0},ou=People</beans:value>
+            </beans:list>
+        </beans:property>
+    </beans:bean>-->
+
+    <!--<beans:bean id="customLdapAuthoritiesPopulator" class="org.plese.service.CustomLdapAuthoritiesPopulator">
+        <beans:property name="dbUserDetailService" ref="dbUserDetailService"/>
+    </beans:bean>-->
+
+</beans:beans>

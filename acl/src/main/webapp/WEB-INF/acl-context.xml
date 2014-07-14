@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:security="http://www.springframework.org/schema/security"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/security
+       http://www.springframework.org/schema/security/spring-security.xsd">
+
+    <!--enables method security and expression-based access control-->
+    <security:global-method-security pre-post-annotations="enabled">
+        <security:expression-handler ref="expressionHandler"/>
+    </security:global-method-security>
+
+    <!--custom expression handler-->
+    <bean id="expressionHandler" class="org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler" >
+        <!--enable using hasPermission() expression in expressionHandler-->
+        <property name="permissionEvaluator" ref="permissionEvaluator"/>
+        <property name="roleHierarchy" ref="roleHierarchy"/>
+    </bean>
+
+    <!--custom permission evaluator, using standard ACL implementation-->
+    <bean id="permissionEvaluator" class="org.springframework.security.acls.AclPermissionEvaluator">
+        <constructor-arg  ref="aclService"/>
+    </bean>
+
+    <!--declare acl service-->
+    <bean id="aclService" class="org.springframework.security.acls.jdbc.JdbcMutableAclService" >
+        <constructor-arg ref="aclDataSource"/>
+        <constructor-arg ref="lookupStrategy"/>
+        <constructor-arg ref="aclCache"/>
+    </bean>
+
+    <!--declare a lookup strategy-->
+    <bean id="lookupStrategy" class="org.springframework.security.acls.jdbc.BasicLookupStrategy">
+        <constructor-arg ref="aclDataSource"/>
+        <constructor-arg ref="aclCache"/>
+        <constructor-arg ref="aclAuthorizationStrategy"/>
+        <constructor-arg ref="auditLogger"/>
+    </bean>
+
+    <!--declare a datasource-->
+    <bean id="aclDataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource"
+          destroy-method="close"
+          p:driverClass="com.mysql.jdbc.Driver"
+          p:jdbcUrl="jdbc:mysql://localhost/demo-acl"
+          p:user="web_app_admin"
+          p:password="1234"
+          p:acquireIncrement="5"
+          p:idleConnectionTestPeriod="60"
+          p:maxPoolSize="100"
+          p:maxStatements="50"
+          p:minPoolSize="10" />
+
+    <bean id="aclCache" class="org.springframework.security.acls.domain.EhCacheBasedAclCache">
+        <constructor-arg>
+            <bean class="org.springframework.cache.ehcache.EhCacheFactoryBean">
+                <property name="cacheManager">
+                    <bean class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean">
+                        <!-- <property name="configLocation" value="classpath:META-INF/ehcache.xml"/> -->
+                    </bean>
+                </property>
+                <property name="cacheName" value="aclCache"/>
+            </bean>
+        </constructor-arg>
+    </bean>
+
+
+    <!--declare ecache for ACL-->
+    <!--<bean id="aclCache" class="org.springframework.security.acls.domain.EhCacheBasedAclCache">
+        <constructor-arg ref="cache"/>
+        <constructor-arg ref="permissionGrantingStrategy"/>
+        <constructor-arg ref="aclAuthorizationStrategy"/>
+    </bean>
+
+    <bean id="permissionGrantingStrategy" class="org.springframework.security.acls.domain.DefaultPermissionGrantingStrategy">
+        <constructor-arg ref="auditLogger"/>
+    </bean>
+
+    <bean id="cache" class="net.sf.ehcache.Cache" >
+        <constructor-arg>
+            <bean class="net.sf.ehcache.config.CacheConfiguration" >
+                 <property name="name" value="test2"/>
+                <property name="logging" value="true"/>
+                <property name="eternal" value="true"/>
+
+            </bean>
+        </constructor-arg>
+    </bean>-->
+
+     <!--An ACL authorization strategy to determine whether a principal is permitted to call administrative methods -->
+    <bean id="aclAuthorizationStrategy" class="org.springframework.security.acls.domain.AclAuthorizationStrategyImpl">
+        <constructor-arg>
+            <list>
+                <bean class="org.springframework.security.core.authority.GrantedAuthorityImpl">
+                    <constructor-arg value="ROLE_ADMIN"/>
+                </bean>
+                <bean class="org.springframework.security.core.authority.GrantedAuthorityImpl">
+                    <constructor-arg value="ROLE_ADMIN"/>
+                </bean>
+                <bean class="org.springframework.security.core.authority.GrantedAuthorityImpl">
+                    <constructor-arg value="ROLE_ADMIN"/>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <!-- Declare an audit logger-->
+    <bean id="auditLogger" class="org.springframework.security.acls.domain.ConsoleAuditLogger"/>
+
+    <!--Defines the role order (hierarchy)-->
+    <!-- http://static.springsource.org/spring-security/site/docs/3.0.x/apidocs/org/springframework/security/access/hierarchicalroles/RoleHierarchyImpl.html -->
+    <bean id="roleHierarchy"  class="org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl">
+        <property name="hierarchy">
+            <value>
+                <!--ROLE_ADMIN > ROLE_USER-->
+                ROLE_USER > ROLE_VISITOR
+            </value>
+        </property>
+    </bean>
+</beans>
