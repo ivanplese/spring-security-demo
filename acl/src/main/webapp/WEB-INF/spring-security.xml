@@ -23,12 +23,23 @@
                 logout-url="/auth/logout"/>
     </http>
 
-    <!--first authentication manager that uses combination of LDAP + DB-->
+    <authentication-manager>
+        <authentication-provider user-service-ref="userDetailsService"/>
+    </authentication-manager>
+
+    <user-service id="userDetailsService">
+        <user name="demo_admin" password="demo_admin" authorities="ROLE_ADMIN, ROLE_USER, ROLE_VISITOR" />
+        <user name="demo_user" password="demo_user" authorities="ROLE_USER, ROLE_VISITOR" />
+        <user name="demo_user2" password="demo_user2" authorities="ROLE_USER, ROLE_VISITOR" />
+        <user name="demo_visitor" password="demo_visitor" authorities="ROLE_VISITOR" />
+    </user-service>
+
+    <!--&lt;!&ndash;first authentication manager that uses combination of LDAP + DB&ndash;&gt;
     <authentication-manager>
         <authentication-provider ref='ldapAuthProvider'/>
     </authentication-manager>
 
-    <!--context source for ldap-server used for authentification-->
+    &lt;!&ndash;context source for ldap-server used for authentification&ndash;&gt;
     <beans:bean id="contextSource" class="org.springframework.security.ldap.DefaultSpringSecurityContextSource">
         <beans:constructor-arg value="ldap://plese.com.hr:389" />
         <beans:property name="userDn" value="cn=admin,dc=koshnica,dc=biz" />
@@ -36,10 +47,10 @@
         <beans:property name="password" value="H8kVly6g" />
     </beans:bean>
 
-    <!--LDAP authentication provider used by the default authentication manager.
+    &lt;!&ndash;LDAP authentication provider used by the default authentication manager.
         Searches inside the ou=People domain.
         Uses ldap context source.
-        Uses custom AuthenticationPopulator that gets ROLES from the Database-->
+        Uses custom AuthenticationPopulator that gets ROLES from the Database&ndash;&gt;
     <beans:bean id="ldapAuthProvider"
                 class="org.springframework.security.ldap.authentication.LdapAuthenticationProvider">
         <beans:constructor-arg>
@@ -58,6 +69,5 @@
                 <beans:property name="dbUserDetailService" ref="dbUserDetailService"/>
             </beans:bean>
         </beans:constructor-arg>
-    </beans:bean>
-
+    </beans:bean>-->
 </beans:beans>
